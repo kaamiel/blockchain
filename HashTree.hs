@@ -1,6 +1,7 @@
 module HashTree where
 import Utils
 import Hashable32
+-- import qualified Control.Monad as CM
 
 data Tree a = Leaf Hash a | Twig Hash (Tree a) | Node Hash (Tree a) (Tree a)
 
@@ -37,7 +38,7 @@ treeHash (Twig h _)   = h
 treeHash (Node h _ _) = h
 
 indent :: Int -> ShowS
-indent k = showString . f . take k . repeat $ ' '
+indent k = showString . f $ replicate k ' '
     where
         f = if k == 0 then id else showChar '\n'
 
@@ -51,17 +52,55 @@ drawTree t = drawsTree t 0 "\n"
 
 
 type MerklePath = [Either Hash Hash]
-
 data MerkleProof a = MerkleProof a MerklePath
 
+instance (Show a) => Show (MerkleProof a) where
+    showsPrec d (MerkleProof e path) =
+        showParen (d > 0) $ showString "MerkleProof " . shows e . showChar ' ' . showsMerklePath path
+
 buildProof :: Hashable a => a -> Tree a -> Maybe (MerkleProof a)
-buildProof = undefined
+buildProof e t = build e . maybeHead $ merklePaths e t
+    where
+        build :: Hashable a => a -> Maybe MerklePath -> Maybe (MerkleProof a)
+        build e Nothing = Nothing
+        build e (Just path) = Just (MerkleProof e path)
+
 
 merklePaths :: Hashable a => a -> Tree a -> [MerklePath]
-merklePaths = undefined
+merklePaths e t = foldr check_and_drop_last [] . all_paths $ t
+    where
+        h_e = hash e
+        all_paths :: Tree a -> [MerklePath]
+        all_paths (Leaf h _) = [[Right h]]
+        all_paths (Twig _ t) = [Left (treeHash t) : path | path <- all_paths t]
+        all_paths (Node _ l r) = [Left (treeHash r) : path | path <- all_paths l] ++ [Right (treeHash l) : path | path <- all_paths r]
+        check_and_drop_last :: MerklePath -> [MerklePath] -> [MerklePath]
+        check_and_drop_last [] acc = acc
+        check_and_drop_last path acc =
+            let
+                p_init = init path
+                p_last = fromEither . last $ path
+            in
+            if p_last == h_e then p_init:acc else acc
+
+
+showsMerklePath :: MerklePath -> ShowS
+showsMerklePath path = foldr showsStep (showString "") path
+    where
+        showsStep :: Either Hash Hash -> ShowS -> ShowS
+        showsStep (Left h) acc = showString "<" . showsHash h . acc
+        showsStep (Right h) acc = showString ">" . showsHash h . acc
+
+showMerklePath :: MerklePath -> String
+showMerklePath path = showsMerklePath path ""
+
 
 verifyProof :: Hashable a => Hash -> MerkleProof a -> Bool
-verifyProof = undefined
+verifyProof h (MerkleProof e path) = foldr check (hash e) path == h
+    where
+        check :: Either Hash Hash -> Hash -> Hash
+        check (Left h) acc = combine acc h
+        check (Right h) acc = combine h acc
 
 
 
