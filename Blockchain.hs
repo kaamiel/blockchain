@@ -37,7 +37,7 @@ data BlockHeader = BlockHeader
   } deriving Show
 
 instance Hashable BlockHeader where
-  hash (BlockHeader p c r n) = hash [p,hash c, r, n]
+  hash (BlockHeader p c r n) = hash [p, hash c, r, n]
 
 difficulty = 5
 blockReward = 50*coin
@@ -56,7 +56,25 @@ type Miner = Address
 type Nonce = Word32
 
 mineBlock :: Miner -> Hash -> [Transaction] -> Block
-mineBlock miner parent txs = undefined
+mineBlock miner parent txs = mine (0 :: Int)
+  where
+    mine :: Int -> Block
+    mine k =
+      let
+        coinbase = coinbaseTx miner
+        tree = buildTree (coinbase:txs)
+        hdr = BlockHeader
+          { parent = parent
+          , coinbase = coinbase
+          , txroot = treeHash tree
+          , nonce = hash k
+          }
+        block = Block
+          { blockHdr = hdr
+          , blockTxs = txs
+          }
+      in
+      if (verifyBlock block parent) /= Nothing then block else mine (k + 1)
 
 genesis = block0
 block0 = mineBlock (hash "Satoshi") 0 []
@@ -72,15 +90,17 @@ chain = [block2, block1, block0]
 -- Just 0x0dbea380
 
 validChain :: [Block] -> Bool
-validChain = undefined
+validChain chain = verifyChain chain /= Nothing
 
 verifyChain :: [Block] -> Maybe Hash
-verifyChain = undefined
+verifyChain chain = foldM (flip verifyBlock) 0 . reverse $ chain
+
 
 verifyBlock :: Block -> Hash -> Maybe Hash
 verifyBlock b@(Block hdr txs) parentHash = do
   guard (parent hdr == parentHash)
   guard (txroot hdr == treeHash (buildTree (coinbase hdr:txs)))
+  guard (validNonce hdr)
   return (hash b)
 
 
