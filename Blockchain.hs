@@ -126,7 +126,13 @@ validateReceipt r hdr = txrBlock r == hash hdr
                         && verifyProof (txroot hdr) (txrProof r)
 
 mineTransactions :: Miner -> Hash -> [Transaction] -> (Block, [TransactionReceipt])
-mineTransactions miner parent txs = undefined
+mineTransactions miner parent txs =
+  let
+    coinbase = coinbaseTx miner
+    tree = buildTree (coinbase:txs)
+    block = mineBlock miner parent txs
+  in
+  (block, [TxReceipt { txrBlock = hash block, txrProof = fromMaybe (MerkleProof tx []) $ buildProof tx tree } | tx <- txs])
 
 {- | Pretty printing
 >>> runShows $ pprBlock block2

@@ -56,7 +56,7 @@ data MerkleProof a = MerkleProof a MerklePath
 
 instance (Show a) => Show (MerkleProof a) where
     showsPrec d (MerkleProof e path) =
-        showParen (d > 0) $ showString "MerkleProof " . shows e . showChar ' ' . showsMerklePath path
+        showParen (d > 0) $ showString "MerkleProof " . showsPrec 11 e . showChar ' ' . showsMerklePath path
 
 buildProof :: Hashable a => a -> Tree a -> Maybe (MerkleProof a)
 buildProof e t = build e . maybeHead $ merklePaths e t
