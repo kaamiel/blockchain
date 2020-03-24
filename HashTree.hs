@@ -1,7 +1,6 @@
 module HashTree where
 import Utils
 import Hashable32
--- import qualified Control.Monad as CM
 
 data Tree a = Leaf Hash a | Twig Hash (Tree a) | Node Hash (Tree a) (Tree a)
 
@@ -30,17 +29,35 @@ buildTree l = build . map leaf $ l
         pair_trees :: Hashable a => [Tree a] -> [Tree a]
         pair_trees [] = []
         pair_trees [t] = [twig t]
-        pair_trees (t1:t2:rest) = node t1 t2 : pair_trees rest
+        pair_trees (t1:t2:ts) = node t1 t2 : pair_trees ts
 
 treeHash :: Tree a -> Hash
-treeHash (Leaf h _)   = h
-treeHash (Twig h _)   = h
+treeHash (Leaf h _) = h
+treeHash (Twig h _) = h
 treeHash (Node h _ _) = h
 
+{- | drawsTree
+>>> putStr $ drawTree $ buildTree "fubar"
+0x2e1cc0e4 -
+  0xfbfe18ac -
+    0x6600a107 -
+      0x00000066 'f'
+      0x00000075 'u'
+    0x62009aa7 -
+      0x00000062 'b'
+      0x00000061 'a'
+  0xd11bea20 +
+    0x7200b3e8 +
+      0x00000072 'r'
+
+>>> print $ drawTree $ buildTree "a"
+"0x00000061 'a'\n"
+-}
+
 indent :: Int -> ShowS
-indent k = showString . f $ replicate k ' '
-    where
-        f = if k == 0 then id else showChar '\n'
+indent k
+    | k <= 0    = id
+    | otherwise = showString . showChar '\n' $ replicate k ' '
 
 drawsTree :: Show a => Tree a -> Int -> ShowS
 drawsTree (Leaf h e) k = indent k . showsHash h . showChar ' ' . shows e
@@ -50,6 +67,31 @@ drawsTree (Node h l r) k = indent k . showsHash h . showString " -" . drawsTree 
 drawTree :: Show a => Tree a -> String
 drawTree t = drawsTree t 0 "\n"
 
+
+{- | Merkle Paths & proofs
+>>> mapM_ print $ map showMerklePath  $ merklePaths 'i' $ buildTree "bitcoin"
+"<0x5214666a<0x7400b6ff>0x00000062"
+">0x69f4387c<0x6e00ad98>0x0000006f"
+
+>>> merklePaths 'i' $ buildTree "bitcoin"
+[[Left 1377068650,Left 1946203903,Right 98],[Right 1777612924,Left 1845538200,Right 111]]
+
+>>> buildProof 'i' $ buildTree "bitcoin"
+Just (MerkleProof 'i' <0x5214666a<0x7400b6ff>0x00000062)
+
+>>> buildProof 'e' $ buildTree "bitcoin"
+Nothing
+
+>>> let t = buildTree "bitcoin"
+>>> let proof = buildProof 'i' t
+>>> verifyProof (treeHash t) <$> proof
+Just True
+>>> verifyProof 0xbada55bb <$> proof
+Just False
+
+>>> buildProof 'a' $ buildTree "a"
+Just (MerkleProof 'a' )
+-}
 
 type MerklePath = [Either Hash Hash]
 data MerkleProof a = MerkleProof a MerklePath
@@ -62,9 +104,8 @@ buildProof :: Hashable a => a -> Tree a -> Maybe (MerkleProof a)
 buildProof e t = build e . maybeHead $ merklePaths e t
     where
         build :: Hashable a => a -> Maybe MerklePath -> Maybe (MerkleProof a)
-        build e Nothing = Nothing
-        build e (Just path) = Just (MerkleProof e path)
-
+        build e' Nothing = Nothing
+        build e' (Just path) = Just (MerkleProof e' path)
 
 merklePaths :: Hashable a => a -> Tree a -> [MerklePath]
 merklePaths e t = foldr check_and_drop_last [] . all_paths $ t
@@ -83,9 +124,8 @@ merklePaths e t = foldr check_and_drop_last [] . all_paths $ t
             in
             if p_last == h_e then p_init:acc else acc
 
-
 showsMerklePath :: MerklePath -> ShowS
-showsMerklePath path = foldr showsStep (showString "") path
+showsMerklePath path = foldr showsStep id path
     where
         showsStep :: Either Hash Hash -> ShowS -> ShowS
         showsStep (Left h) acc = showString "<" . showsHash h . acc
@@ -94,13 +134,9 @@ showsMerklePath path = foldr showsStep (showString "") path
 showMerklePath :: MerklePath -> String
 showMerklePath path = showsMerklePath path ""
 
-
 verifyProof :: Hashable a => Hash -> MerkleProof a -> Bool
-verifyProof h (MerkleProof e path) = foldr check (hash e) path == h
+verifyProof h (MerkleProof e path) = foldr step (hash e) path == h
     where
-        check :: Either Hash Hash -> Hash -> Hash
-        check (Left h) acc = combine acc h
-        check (Right h) acc = combine h acc
-
-
-
+        step :: Either Hash Hash -> Hash -> Hash
+        step (Left h) acc = combine acc h
+        step (Right h) acc = combine h acc
