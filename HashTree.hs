@@ -104,7 +104,7 @@ buildProof :: Hashable a => a -> Tree a -> Maybe (MerkleProof a)
 buildProof e t = build e . maybeHead $ merklePaths e t
     where
         build :: Hashable a => a -> Maybe MerklePath -> Maybe (MerkleProof a)
-        build e' Nothing = Nothing
+        build _ Nothing = Nothing
         build e' (Just path) = Just (MerkleProof e' path)
 
 merklePaths :: Hashable a => a -> Tree a -> [MerklePath]
@@ -113,7 +113,7 @@ merklePaths e t = foldr check_and_drop_last [] . all_paths $ t
         h_e = hash e
         all_paths :: Tree a -> [MerklePath]
         all_paths (Leaf h _) = [[Right h]]
-        all_paths (Twig _ t) = [Left (treeHash t) : path | path <- all_paths t]
+        all_paths (Twig _ t') = [Left (treeHash t') : path | path <- all_paths t']
         all_paths (Node _ l r) = [Left (treeHash r) : path | path <- all_paths l] ++ [Right (treeHash l) : path | path <- all_paths r]
         check_and_drop_last :: MerklePath -> [MerklePath] -> [MerklePath]
         check_and_drop_last [] acc = acc
@@ -138,5 +138,5 @@ verifyProof :: Hashable a => Hash -> MerkleProof a -> Bool
 verifyProof h (MerkleProof e path) = foldr step (hash e) path == h
     where
         step :: Either Hash Hash -> Hash -> Hash
-        step (Left h) acc = combine acc h
-        step (Right h) acc = combine h acc
+        step (Left h') acc = combine acc h'
+        step (Right h') acc = combine h' acc
