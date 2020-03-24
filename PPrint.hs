@@ -4,17 +4,17 @@ writeln :: String -> IO ()
 writeln = putStrLn
 
 showsPair :: Show a => (String, a) -> ShowS
-showsPair (k,v) = undefined
+showsPair (k, v) = showString k . showString ": " . shows v
 
 pprH, pprV :: [ShowS] -> ShowS
-pprV = intercalateS undefined
-pprH = intercalateS undefined
+pprV = intercalateS $ showChar '\n'
+pprH = intercalateS $ showChar ' '
 
 intercalateS :: ShowS -> [ShowS] -> ShowS
-intercalateS sep list = undefined
+intercalateS sep list = foldr1 (\a b -> a . sep . b) list
 
 pprListWith :: (a -> ShowS) -> [a] -> ShowS
-pprListWith = undefined
+pprListWith f list = intercalateS (showChar '\n') . map f $ list
 
 runShows :: ShowS -> IO ()
 runShows = putStrLn . ($"")
