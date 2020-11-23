@@ -1,9 +1,4 @@
----
-header-includes:
-  - \usepackage{a4wide}
----
-
-# JPP 2019/20 --- Program zaliczeniowy (Haskell)
+# JPP 2019/20 — Program zaliczeniowy (Haskell)
 
 ## Build Your Own Blockchain
 
@@ -125,7 +120,7 @@ oparty o schemat "Proof of Work". Uzupełnij dostarczony moduł `Blockchain` zgo
 Blockchain to łańcuch bloków z mechanizmami zapewniania jego rzetelności.
 W schemacie "Proof of Work" gwarancja rzetelności
 opiera się na trudności obliczeniowej generowania kolejnych bloków
-(zatem zmiana historii po upływie kilku bloków wymaga mocy obliczeniowej, której nikt nie posiada). Jako nagrodę za wykonywanie tej pracy obliczeniowej, ktokolwiek stworzy blok (co wymaga znalezienia wartości uzupełniającej blok tak, aby jego skrót spełniał określone warunki), otrzymuje w nagrodę pewną ilość monet (dla Bitcoina w tym momencie 12.5BTC, u nas 50 monet). Nagroda ta zapisywana jest w specjalnej transakcji wewnątrz bloku, zwanej `coinbase'.
+(zatem zmiana historii po upływie kilku bloków wymaga mocy obliczeniowej, której nikt nie posiada). Jako nagrodę za wykonywanie tej pracy obliczeniowej, ktokolwiek stworzy blok (co wymaga znalezienia wartości uzupełniającej blok tak, aby jego skrót spełniał określone warunki), otrzymuje w nagrodę pewną ilość monet (dla Bitcoina w tym momencie 12.5BTC, u nas 50 monet). Nagroda ta zapisywana jest w specjalnej transakcji wewnątrz bloku, zwanej `coinbase`.
 
 Cytując wiki Bitcoin:
 
@@ -341,28 +336,3 @@ Examples: 16  Tried: 16  Errors: 0  Failures: 0
 3. Do dostarczonych szablonów modułów można dodawac własne funkcje.
 Nie można natomiast usuwać, ani zmieniać znajdujących się w nich elementów,
 w szczególności komentarzy zawierających testy.
-
-## Ocenianie
-
-Zadanie będzie oceniane nie tylko pod kątem poprawności,
-ale również czytelności kodu i wykorzystania poznanych mechanizmów języka.
-
-Zadanie MUSI być rozwiązane samodzielnie. Wszelkie zapożyczenia muszą być wyraźnie zaznaczone z podaniem źródła.
-
-Zabronione jest oglądanie rozwiązań, jak również wszelkie formy udostępniania
-własnego rozwiązania innym osobom.
-
-Rozwiązania niesamodzielne będą oceniane na 0p.
-W wypadku stwierdzenia istotnego podobieństwa dwóch (lub większej liczby)
-rozwiązań, wszystkie będą oceniane na 0p. Dlatego należy zadbać o utrzymanie
-prywatności swojego kodu.
-
-### Rozwiązania częściowe
-
-Warunkiem uzyskania punktów za rozwiązanie częściowe
-(nie obejmujące całego zakresu zadania,
-bądź nie przechodzące wszystkich wymaganych testów)
-jest wyraźne opisanie zrealizowanego zakresu w komentarzu na początku oddawanego pliku.
-
-Rozwiązaniom częściowym przyznana zostanie znacznie mniejsza liczba punktów
-niż rozwiązaniom pełnym (zasadniczo **najwyżej** 50%).
